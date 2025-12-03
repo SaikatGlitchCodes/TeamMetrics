@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Plus, Trash2, RefreshCw } from "lucide-react";
+import { AlertCircle, Plus, Trash2, RefreshCw, Home } from "lucide-react";
 import { BoringAvatar } from "@/components/ui/avatar";
+import Link from "next/link";
 
 interface Team {
   id: string;
@@ -253,13 +254,21 @@ export function TeamManagementPage() {
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Team Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Create teams and assign GitHub developers
-          </p>
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Team Management
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Create teams and assign GitHub developers
+            </p>
+          </div>
+          <Link href="/">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+          </Link>
         </div>
 
         {error && (
