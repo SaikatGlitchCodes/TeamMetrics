@@ -32,7 +32,9 @@ export function DashboardHeader({
 
   const checkServer = async () => {
     try {
-      const response = await axios.get("https://metrictracker-be.onrender.com/health");
+      const response = await axios.get(
+        "https://metrictracker-be.onrender.com/health"
+      );
       if (response.status === 200) {
         setStatus("green");
       } else {
@@ -46,14 +48,16 @@ export function DashboardHeader({
   return (
     <div className="mb-8">
       <div className="flex justify-between">
-        <div className="gap-x-3">
-          <Image
-            src="/brand.png"
-            alt="Brand Logo"
-            width={100}
-            height={100}
-            className="mb-4"
-          />
+        <div className="flex gap-x-3">
+          <div>
+            <Image
+              src="/brand.png"
+              alt="Brand Logo"
+              width={100}
+              height={100}
+              className="mb-4"
+            />
+          </div>
           <div>
             <h1 className="text-4xl text-foreground mb-2">{title}</h1>
             <p className="text-muted-foreground mb-6">
