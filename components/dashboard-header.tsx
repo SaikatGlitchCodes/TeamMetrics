@@ -13,6 +13,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LogoutButton } from "./logout-button";
 
 interface DashboardHeaderProps {
   title: string;
@@ -47,7 +48,7 @@ export function DashboardHeader({
 
   return (
     <div className="mb-8">
-      <div className="flex justify-between">
+      <div className="flex justify-between items-start">
         <div className="flex gap-x-3">
           <div>
             <Image
@@ -65,7 +66,8 @@ export function DashboardHeader({
             </p>
           </div>
         </div>
-        <div>
+        <div className="flex flex-col items-end gap-y-3">
+          <LogoutButton />
           <Link href="/admin" className="flex items-center">
             <p>Admin </p>
             <ArrowRightIcon size={18} className="" />
