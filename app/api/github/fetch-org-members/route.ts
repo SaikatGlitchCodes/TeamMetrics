@@ -11,30 +11,45 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch organization members from GitHub API
-    const response = await fetch(
-      `https://github.hy-vee.cloud/api/v3/orgs/${org}/members?per_page=100`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
+    /* -------------------------------
+       1. Fetch ALL org members (pagination)
+    -------------------------------- */
+    const allMembers: any[] = [];
+    let page = 1;
+    let hasMore = true;
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      return NextResponse.json(
-        { error: errorData.message || "Failed to fetch organization members" },
-        { status: response.status }
+    while (hasMore) {
+      const response = await fetch(
+        `https://github.hy-vee.cloud/api/v3/orgs/${org}/members?per_page=100&page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        }
       );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return NextResponse.json(
+          { error: errorData.message || "Failed to fetch organization members" },
+          { status: response.status }
+        );
+      }
+
+      const members = await response.json();
+      allMembers.push(...members);
+
+      // stop when less than per_page
+      hasMore = members.length === 100;
+      page++;
     }
 
-    const members = await response.json();
-
-    // Fetch detailed user information for each member
-    const usersPromises = members.map(async (member: any) => {
+    /* --------------------------------
+       2. Fetch detailed user info
+    --------------------------------- */
+    const usersPromises = allMembers.map(async (member: any) => {
       const userResponse = await fetch(member.url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -43,11 +58,10 @@ export async function POST(request: Request) {
         },
       });
 
-      if (!userResponse.ok) {
-        return null;
-      }
+      if (!userResponse.ok) return null;
 
       const userData = await userResponse.json();
+
       return {
         github_username: userData.login,
         github_id: userData.id,
@@ -59,11 +73,12 @@ export async function POST(request: Request) {
       };
     });
 
-    const users = (await Promise.all(usersPromises)).filter(
-      (user) => user !== null
-    );
+    const users = (await Promise.all(usersPromises)).filter(Boolean);
 
-    return NextResponse.json({ users }, { status: 200 });
+    return NextResponse.json(
+      { users, total: users.length },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching GitHub users:", error);
     return NextResponse.json(
