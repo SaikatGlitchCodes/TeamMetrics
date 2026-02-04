@@ -17,6 +17,44 @@ interface TeamMember {
   otherCommentsCount: number;
 }
 
+interface MonthlyMetrics {
+  month: string;
+  year: number;
+  prCount: number;
+  mergedPRs: number;
+  rejectedPRs: number;
+  mergeRate: number;
+  commitCount: number;
+  reviewCommentsGiven: number;
+  reviewCommentsReceived: number;
+  issuesCreated: number;
+  issuesClosed: number;
+  linesAdded: number;
+  linesDeleted: number;
+  teamComments: number;
+  externalComments: number;
+  productivityScore: number;
+  collaborationScore: number;
+  reviewQualityScore: number;
+}
+
+interface EngineerData {
+  username: string;
+  name?: string;
+  email?: string;
+  joinDate?: string;
+  totalPRs: number;
+  totalMergedPRs: number;
+  totalCommits: number;
+  totalReviews: number;
+  totalTeamComments: number;
+  totalExternalComments: number;
+  monthlyData: MonthlyMetrics[];
+  averageProductivity: number;
+  averageCollaboration: number;
+  averageReviewQuality: number;
+}
+
 interface ExportData {
   teamName: string;
   teamMembers: string[];
@@ -24,6 +62,14 @@ interface ExportData {
   exportDate: string;
   period: string;
   quarterlyData?: any[];
+}
+
+interface EngineerMonthlyExportData {
+  teamName: string;
+  engineers: EngineerData[];
+  exportDate: string;
+  period: string;
+  generatedAt: string;
 }
 
 export function exportToCSV(data: ExportData): void {
@@ -323,6 +369,319 @@ export function exportTeamData(
     case 'excel':
     default:
       exportToExcel(exportData);
+      break;
+  }
+}
+
+// Monthly Engineer Data Export Functions
+export function exportEngineerMonthlyDataToExcel(data: EngineerMonthlyExportData): void {
+  const workbook = generateEngineerMonthlyExcelWorkbook(data);
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${data.teamName}_engineer_monthly_analysis_${data.exportDate}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+export function exportEngineerMonthlyDataToCSV(data: EngineerMonthlyExportData): void {
+  const csvContent = generateEngineerMonthlyCSVContent(data);
+  downloadFile(csvContent, `${data.teamName}_engineer_monthly_analysis_${data.exportDate}.csv`, 'text/csv');
+}
+
+function generateEngineerMonthlyExcelWorkbook(data: EngineerMonthlyExportData): XLSX.WorkBook {
+  const workbook = XLSX.utils.book_new();
+
+  // Summary Sheet
+  const summaryData = [
+    ['Engineer Monthly Performance Report'],
+    [''],
+    ['Team Name', data.teamName],
+    ['Report Generated', new Date(data.generatedAt).toLocaleDateString()],
+    ['Period', data.period],
+    ['Total Engineers', data.engineers.length],
+    [''],
+    ['Engineer Overview'],
+    ['Engineer', 'Total PRs', 'Merged PRs', 'Total Commits', 'Total Reviews', 'Team Comments', 'External Comments', 'Avg Productivity', 'Avg Collaboration', 'Avg Review Quality']
+  ];
+
+  data.engineers.forEach(engineer => {
+    summaryData.push([
+      engineer.username,
+      engineer.totalPRs,
+      engineer.totalMergedPRs,
+      engineer.totalCommits,
+      engineer.totalReviews,
+      engineer.totalTeamComments,
+      engineer.totalExternalComments,
+      engineer.averageProductivity.toFixed(1),
+      engineer.averageCollaboration.toFixed(1),
+      engineer.averageReviewQuality.toFixed(1)
+    ]);
+  });
+
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+  summarySheet['!cols'] = [
+    { wch: 20 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 16 },
+    { wch: 16 },
+    { wch: 18 }
+  ];
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+
+  // Monthly Trends Sheet (All Engineers Combined)
+  const monthlyTrendsData = [
+    ['Month/Year', 'Total PRs', 'Merged PRs', 'Total Commits', 'Reviews Given', 'Team Comments', 'External Comments', 'Avg Productivity Score', 'Avg Collaboration Score', 'Avg Review Quality Score']
+  ];
+
+  const monthMap = new Map<string, any>();
+  
+  data.engineers.forEach(engineer => {
+    engineer.monthlyData.forEach(month => {
+      const key = `${month.month}-${month.year}`;
+      if (!monthMap.has(key)) {
+        monthMap.set(key, {
+          prCount: 0,
+          mergedPRs: 0,
+          commitCount: 0,
+          reviewCommentsGiven: 0,
+          teamComments: 0,
+          externalComments: 0,
+          productivityScores: [],
+          collaborationScores: [],
+          reviewQualityScores: [],
+          engineerCount: 0
+        });
+      }
+      const monthData = monthMap.get(key);
+      monthData.prCount += month.prCount;
+      monthData.mergedPRs += month.mergedPRs;
+      monthData.commitCount += month.commitCount;
+      monthData.reviewCommentsGiven += month.reviewCommentsGiven;
+      monthData.teamComments += month.teamComments;
+      monthData.externalComments += month.externalComments;
+      monthData.productivityScores.push(month.productivityScore);
+      monthData.collaborationScores.push(month.collaborationScore);
+      monthData.reviewQualityScores.push(month.reviewQualityScore);
+      monthData.engineerCount = data.engineers.length;
+    });
+  });
+
+  Array.from(monthMap.entries())
+    .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+    .forEach(([key, monthData]) => {
+      const avgProductivity = monthData.productivityScores.length > 0 
+        ? monthData.productivityScores.reduce((a: number, b: number) => a + b, 0) / monthData.productivityScores.length
+        : 0;
+      const avgCollaboration = monthData.collaborationScores.length > 0
+        ? monthData.collaborationScores.reduce((a: number, b: number) => a + b, 0) / monthData.collaborationScores.length
+        : 0;
+      const avgReviewQuality = monthData.reviewQualityScores.length > 0
+        ? monthData.reviewQualityScores.reduce((a: number, b: number) => a + b, 0) / monthData.reviewQualityScores.length
+        : 0;
+
+      monthlyTrendsData.push([
+        key,
+        monthData.prCount,
+        monthData.mergedPRs,
+        monthData.commitCount,
+        monthData.reviewCommentsGiven,
+        monthData.teamComments,
+        monthData.externalComments,
+        avgProductivity.toFixed(1),
+        avgCollaboration.toFixed(1),
+        avgReviewQuality.toFixed(1)
+      ]);
+    });
+
+  const monthlyTrendsSheet = XLSX.utils.aoa_to_sheet(monthlyTrendsData);
+  monthlyTrendsSheet['!cols'] = [
+    { wch: 15 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 18 }
+  ];
+  XLSX.utils.book_append_sheet(workbook, monthlyTrendsSheet, 'Monthly Trends');
+
+  // Individual Engineer Sheets
+  data.engineers.forEach(engineer => {
+    const engineerMonthlyData = [
+      [`${engineer.username}'s Monthly Performance`],
+      [''],
+      ['Name', engineer.name || 'N/A'],
+      ['Email', engineer.email || 'N/A'],
+      ['Join Date', engineer.joinDate || 'N/A'],
+      [''],
+      ['Month', 'PRs', 'Merged PRs', 'Rejected PRs', 'Merge Rate (%)', 'Commits', 'Reviews Given', 'Reviews Received', 'Issues Created', 'Issues Closed', 'Lines Added', 'Lines Deleted', 'Team Comments', 'External Comments', 'Productivity Score', 'Collaboration Score', 'Review Quality Score']
+    ];
+
+    engineer.monthlyData.forEach(month => {
+      engineerMonthlyData.push([
+        `${month.month}-${month.year}`,
+        month.prCount,
+        month.mergedPRs,
+        month.rejectedPRs,
+        month.mergeRate.toFixed(1),
+        month.commitCount,
+        month.reviewCommentsGiven,
+        month.reviewCommentsReceived,
+        month.issuesCreated,
+        month.issuesClosed,
+        month.linesAdded,
+        month.linesDeleted,
+        month.teamComments,
+        month.externalComments,
+        month.productivityScore.toFixed(1),
+        month.collaborationScore.toFixed(1),
+        month.reviewQualityScore.toFixed(1)
+      ]);
+    });
+
+    const engineerSheet = XLSX.utils.aoa_to_sheet(engineerMonthlyData);
+    engineerSheet['!cols'] = [
+      { wch: 15 },
+      { wch: 10 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 17 },
+      { wch: 18 },
+      { wch: 18 }
+    ];
+    XLSX.utils.book_append_sheet(workbook, engineerSheet, engineer.username.substring(0, 30));
+  });
+
+  return workbook;
+}
+
+function generateEngineerMonthlyCSVContent(data: EngineerMonthlyExportData): string {
+  let csvContent = 'Engineer Monthly Performance Report\n\n';
+  
+  csvContent += `Team Name,${data.teamName}\n`;
+  csvContent += `Report Generated,${new Date(data.generatedAt).toLocaleDateString()}\n`;
+  csvContent += `Period,${data.period}\n`;
+  csvContent += `Total Engineers,${data.engineers.length}\n\n`;
+
+  // Summary Section
+  csvContent += 'Engineer Overview\n';
+  csvContent += 'Engineer,Total PRs,Merged PRs,Total Commits,Total Reviews,Team Comments,External Comments,Avg Productivity,Avg Collaboration,Avg Review Quality\n';
+  
+  data.engineers.forEach(engineer => {
+    csvContent += `${engineer.username},${engineer.totalPRs},${engineer.totalMergedPRs},${engineer.totalCommits},${engineer.totalReviews},${engineer.totalTeamComments},${engineer.totalExternalComments},${engineer.averageProductivity.toFixed(1)},${engineer.averageCollaboration.toFixed(1)},${engineer.averageReviewQuality.toFixed(1)}\n`;
+  });
+
+  csvContent += '\n\nMonthly Trends (All Engineers Combined)\n';
+  csvContent += 'Month/Year,Total PRs,Merged PRs,Total Commits,Reviews Given,Team Comments,External Comments,Avg Productivity Score,Avg Collaboration Score,Avg Review Quality Score\n';
+
+  const monthMap = new Map<string, any>();
+  
+  data.engineers.forEach(engineer => {
+    engineer.monthlyData.forEach(month => {
+      const key = `${month.month}-${month.year}`;
+      if (!monthMap.has(key)) {
+        monthMap.set(key, {
+          prCount: 0,
+          mergedPRs: 0,
+          commitCount: 0,
+          reviewCommentsGiven: 0,
+          teamComments: 0,
+          externalComments: 0,
+          productivityScores: [],
+          collaborationScores: [],
+          reviewQualityScores: []
+        });
+      }
+      const monthData = monthMap.get(key);
+      monthData.prCount += month.prCount;
+      monthData.mergedPRs += month.mergedPRs;
+      monthData.commitCount += month.commitCount;
+      monthData.reviewCommentsGiven += month.reviewCommentsGiven;
+      monthData.teamComments += month.teamComments;
+      monthData.externalComments += month.externalComments;
+      monthData.productivityScores.push(month.productivityScore);
+      monthData.collaborationScores.push(month.collaborationScore);
+      monthData.reviewQualityScores.push(month.reviewQualityScore);
+    });
+  });
+
+  Array.from(monthMap.entries())
+    .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+    .forEach(([key, monthData]) => {
+      const avgProductivity = monthData.productivityScores.length > 0 
+        ? monthData.productivityScores.reduce((a: number, b: number) => a + b, 0) / monthData.productivityScores.length
+        : 0;
+      const avgCollaboration = monthData.collaborationScores.length > 0
+        ? monthData.collaborationScores.reduce((a: number, b: number) => a + b, 0) / monthData.collaborationScores.length
+        : 0;
+      const avgReviewQuality = monthData.reviewQualityScores.length > 0
+        ? monthData.reviewQualityScores.reduce((a: number, b: number) => a + b, 0) / monthData.reviewQualityScores.length
+        : 0;
+
+      csvContent += `${key},${monthData.prCount},${monthData.mergedPRs},${monthData.commitCount},${monthData.reviewCommentsGiven},${monthData.teamComments},${monthData.externalComments},${avgProductivity.toFixed(1)},${avgCollaboration.toFixed(1)},${avgReviewQuality.toFixed(1)}\n`;
+    });
+
+  // Individual Engineer Details
+  data.engineers.forEach(engineer => {
+    csvContent += `\n\n${engineer.username}'s Monthly Performance\n`;
+    csvContent += `Name,${engineer.name || 'N/A'}\n`;
+    csvContent += `Email,${engineer.email || 'N/A'}\n`;
+    csvContent += `Join Date,${engineer.joinDate || 'N/A'}\n\n`;
+    csvContent += 'Month,PRs,Merged PRs,Rejected PRs,Merge Rate (%),Commits,Reviews Given,Reviews Received,Issues Created,Issues Closed,Lines Added,Lines Deleted,Team Comments,External Comments,Productivity Score,Collaboration Score,Review Quality Score\n';
+
+    engineer.monthlyData.forEach(month => {
+      csvContent += `${month.month}-${month.year},${month.prCount},${month.mergedPRs},${month.rejectedPRs},${month.mergeRate.toFixed(1)},${month.commitCount},${month.reviewCommentsGiven},${month.reviewCommentsReceived},${month.issuesCreated},${month.issuesClosed},${month.linesAdded},${month.linesDeleted},${month.teamComments},${month.externalComments},${month.productivityScore.toFixed(1)},${month.collaborationScore.toFixed(1)},${month.reviewQualityScore.toFixed(1)}\n`;
+    });
+  });
+
+  return csvContent;
+}
+
+export function exportEngineerMonthlyData(
+  teamName: string,
+  engineers: EngineerData[],
+  period: string = 'Last 12 months',
+  format: 'csv' | 'excel' = 'excel'
+): void {
+  const exportData: EngineerMonthlyExportData = {
+    teamName,
+    engineers,
+    exportDate: new Date().toISOString().split('T')[0],
+    period,
+    generatedAt: new Date().toISOString()
+  };
+
+  switch (format) {
+    case 'csv':
+      exportEngineerMonthlyDataToCSV(exportData);
+      break;
+    case 'excel':
+    default:
+      exportEngineerMonthlyDataToExcel(exportData);
       break;
   }
 }
