@@ -406,7 +406,7 @@ export function TeamManagementPage() {
                         onValueChange={(value) =>
                           setSelectedUser(
                             githubUsers.find((user) => user.id === value) ||
-                              null
+                            null
                           )
                         }
                       >
@@ -417,7 +417,7 @@ export function TeamManagementPage() {
                           {githubUsers
                             .filter(
                               (user) =>
-                                !teamMembers.some(
+                                !selectedTeamMembers.some(
                                   (tm) => tm.github_user_id === user.id
                                 )
                             )
