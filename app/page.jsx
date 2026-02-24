@@ -5,10 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { PRCommentAnalysis } from "@/components/pr-comment-analysis"
 import { TeamDevelopersSection } from "@/components/team-developers-section"
+import { MonthlyReviewBarChart } from "@/components/MonthlyReviewBarChart"
+import { SLAChart } from "@/components/SLAChart"
+import { PlatformApprovalChart } from "@/components/PlatformApprovalChart"
 import axios from "axios"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { useTeams } from "@/lib/context/teamsContext"
@@ -77,7 +79,8 @@ export default function Dashboard() {
           };
         }
       }
-      const response = await axios.get(`https://metrictracker-be.onrender.com/prs/team/${teamId}`, { params });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
+      const response = await axios.get(`${apiUrl}/prs/team/${teamId}`, { params });
       setLastQuarterData(response.data)
     } catch (error) {
       console.error("Error fetching team data:", error)
@@ -90,7 +93,8 @@ export default function Dashboard() {
     if (!selectedTeam) return
     try {
       setSyncing(true)
-      await axios.post('https://metrictracker-be.onrender.com/prs/refresh-team-prs', { team_id: selectedTeam })
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
+      await axios.post(`${apiUrl}/prs/refresh-team-prs`, { team_id: selectedTeam })
       
       await fetchTeams(true)
       await fetchTeamData(selectedTeam)
@@ -104,18 +108,18 @@ export default function Dashboard() {
   }
 
   const handleExport = async () => {
-   // Export team data using utility function
+    // Export team data using utility function
   }
-    // Validation schema for custom date range
+
   const customDateSchema = yup.object().shape({
-    start_date: yup.date().required("Start date is required"),
-    end_date: yup.date().required("End date is required").min(
-      yup.ref("start_date"),
-      "End date must be after start date"
+    start_date: yup.date().required('Start date is required'),
+    end_date: yup.date().required('End date is required').min(
+      yup.ref('start_date'),
+      'End date must be after start date'
     ),
   })
 
-  const [dateError, setDateError] = useState("")
+  const [dateError, setDateError] = useState('')
 
   if (loading) {
     return <BrandLoader />
@@ -230,6 +234,41 @@ export default function Dashboard() {
             <TeamDevelopersSection
               lastQuarterData={lastQuarterData}
               lastQuarterLoading={lastQuarterLoading}
+            />
+          </div>
+        )}
+
+        {/* PR Review Time Trends + SLA Compliance */}
+        {selectedTeam && (
+          <div className="mb-12">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-2">PR Review Time Trends</h2>
+              <p className="text-muted-foreground">
+                Monthly trends showing average and median review times, SLA compliance, and platform approvals — current quarter
+              </p>
+            </div>
+            {/* Row 1: Monthly Review Trends + SLA */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start mb-6">
+              <MonthlyReviewBarChart 
+                teamId={selectedTeam}
+                startDate={dateRangeMode === 'custom' ? customStartDate : undefined}
+                endDate={dateRangeMode === 'custom' ? customEndDate : undefined}
+                quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
+                year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
+              />
+              <PlatformApprovalChart
+                teamId={selectedTeam}
+                startDate={dateRangeMode === 'custom' ? customStartDate : undefined}
+                endDate={dateRangeMode === 'custom' ? customEndDate : undefined}
+                quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
+                year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
+              />
+            </div>
+            {/* SLA Chart */}
+            <SLAChart
+              teamId={selectedTeam}
+              quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
+              year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
             />
           </div>
         )}
