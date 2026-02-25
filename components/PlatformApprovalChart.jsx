@@ -9,7 +9,6 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import {
-  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -17,6 +16,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ComposedChart,
+  Line,
 } from 'recharts';
 import { Clock } from 'lucide-react';
 
@@ -213,7 +214,7 @@ export function PlatformApprovalChart({ teamId, startDate, endDate, quarter, yea
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -252,7 +253,15 @@ export function PlatformApprovalChart({ teamId, startDate, endDate, quarter, yea
                 radius={[6, 6, 0, 0]}
                 maxBarSize={60}
               />
-            </BarChart>
+              <Line
+                type="monotone"
+                dataKey="avgBusinessHours"
+                stroke="#f97316"
+                name="PR Count"
+                strokeWidth={10}
+                dot={{ r: 3, fill: '#f97316' }}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>

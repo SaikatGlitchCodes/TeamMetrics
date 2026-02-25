@@ -79,7 +79,7 @@ export default function Dashboard() {
           };
         }
       }
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await axios.get(`${apiUrl}/prs/team/${teamId}`, { params });
       setLastQuarterData(response.data)
     } catch (error) {
@@ -93,7 +93,7 @@ export default function Dashboard() {
     if (!selectedTeam) return
     try {
       setSyncing(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       await axios.post(`${apiUrl}/prs/refresh-team-prs`, { team_id: selectedTeam })
       
       await fetchTeams(true)
@@ -256,20 +256,29 @@ export default function Dashboard() {
                 quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
                 year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
               />
-              <PlatformApprovalChart
+               {/* SLA Chart */}
+               <SLAChart
+                teamName='Platform team'
+                teamId={selectedTeam}
+                quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
+                year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
+              />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start mb-6">
+               <MonthlyReviewBarChart 
                 teamId={selectedTeam}
                 startDate={dateRangeMode === 'custom' ? customStartDate : undefined}
                 endDate={dateRangeMode === 'custom' ? customEndDate : undefined}
                 quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
                 year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
               />
+              <SLAChart
+                teamName='Internal team'
+                teamId={selectedTeam}
+                quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
+                year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
+              />
             </div>
-            {/* SLA Chart */}
-            <SLAChart
-              teamId={selectedTeam}
-              quarter={dateRangeMode === 'quarter' ? parseInt(selectedQuarter) : undefined}
-              year={dateRangeMode === 'quarter' ? parseInt(selectedYear) : undefined}
-            />
           </div>
         )}
 

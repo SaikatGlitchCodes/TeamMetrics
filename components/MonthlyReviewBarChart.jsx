@@ -3,7 +3,7 @@
 import { useTeamReviewMetrics } from '@/lib/hooks/useReviewMetrics';
 import { processTeamReviewMetrics } from '@/lib/utils/reviewMetricsAggregator';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Line } from 'recharts';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 
 export function MonthlyReviewBarChart({ teamId, startDate, endDate, quarter, year }) {
@@ -125,7 +125,7 @@ export function MonthlyReviewBarChart({ teamId, startDate, endDate, quarter, yea
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" vertical={false} />
               <XAxis 
                 dataKey="name" 
@@ -161,7 +161,15 @@ export function MonthlyReviewBarChart({ teamId, startDate, endDate, quarter, yea
                 radius={[6, 6, 0, 0]}
                 maxBarSize={60}
               />
-            </BarChart>
+              <Line
+                type="monotone"
+                dataKey="avgHours"
+                stroke="#f97316"
+                name="PR Count"
+                strokeWidth={2}
+                dot={{ r: 3, fill: '#f97316' }}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
