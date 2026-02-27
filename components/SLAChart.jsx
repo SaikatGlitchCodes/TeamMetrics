@@ -34,17 +34,22 @@ function computeSLAByMonth(prs, teamName='') {
   if (!prs || prs.length === 0) return [];
 
   const monthlyGroups = {};
-  const teamList = teamName.includes('Internal') ? prs.filter(pr=> !pr.first_approval_platform) : prs.filter(pr=> pr.first_approval_platform);
+  const teamList = teamName.includes('Internal')
+    ? prs.filter(pr => pr.first_reviewer_submitted_at)  // only PRs with an internal review
+    : prs.filter(pr => pr.first_approval_platform);
 
   teamList.forEach((pr) => {
 
+    // Use created_at for month bucketing (matches bar chart grouping)
+    const createdDate = new Date(pr.created_at);
+    const year = createdDate.getFullYear();
+    const monthNumber = createdDate.getMonth() + 1;
+    const monthKey = `${year}-${String(monthNumber).padStart(2, '0')}`;
+
+    // ready_for_review_at is used only for SLA window start, not for bucketing
     const startDate = pr.ready_for_review_at
       ? new Date(pr.ready_for_review_at)
-      : new Date(pr.created_at);
-
-    const year = startDate.getFullYear();
-    const monthNumber = startDate.getMonth() + 1;
-    const monthKey = `${year}-${String(monthNumber).padStart(2, '0')}`;
+      : createdDate;
 
     if (!monthlyGroups[monthKey]) {
       monthlyGroups[monthKey] = {
