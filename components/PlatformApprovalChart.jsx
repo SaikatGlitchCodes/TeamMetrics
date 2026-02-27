@@ -258,7 +258,7 @@ export function PlatformApprovalChart({ teamId, startDate, endDate, quarter, yea
                 dataKey="avgBusinessHours"
                 stroke="#f97316"
                 name="PR Count"
-                strokeWidth={10}
+                strokeWidth={2}
                 dot={{ r: 3, fill: '#f97316' }}
               />
             </ComposedChart>
