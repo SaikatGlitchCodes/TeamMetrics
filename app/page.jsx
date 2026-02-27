@@ -79,7 +79,7 @@ export default function Dashboard() {
           };
         }
       }
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
       const response = await axios.get(`${apiUrl}/prs/team/${teamId}`, { params });
       setLastQuarterData(response.data)
     } catch (error) {
@@ -93,7 +93,7 @@ export default function Dashboard() {
     if (!selectedTeam) return
     try {
       setSyncing(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
       await axios.post(`${apiUrl}/prs/refresh-team-prs`, { team_id: selectedTeam })
       
       await fetchTeams(true)
