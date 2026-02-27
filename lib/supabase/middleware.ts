@@ -23,13 +23,23 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session if needed
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    // Refresh session if needed
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  // If no user, redirect to login (except for login/signup pages)
-  if (!user) {
+    // If no user, redirect to login (except for login/signup pages)
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+  } catch (error) {
+    // If fetch fails, allow the request to proceed but log the error
+    // This prevents middleware from crashing when Supabase is unreachable
+    console.error("Supabase auth error in middleware:", error);
+    // Redirect to login if we can't verify session
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

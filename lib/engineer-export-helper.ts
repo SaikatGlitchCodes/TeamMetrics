@@ -109,8 +109,9 @@ export async function fetchAndExportEngineerMetrics(
 ) {
   try {
     // Fetch monthly metrics from your backend API
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
     const response = await fetch(
-      `https://metrictracker-be.onrender.com/engineer-metrics/${teamId}/monthly`
+      `${apiUrl}/engineer-metrics/${teamId}/monthly`
     );
 
     if (!response.ok) {

@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } = await supabase.auth.getSession();
 
         if (error) {
+          console.warn("Session error:", error);
           setError(error.message);
         }
 
@@ -41,7 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "An error occurred";
-        if (mounted) setError(message);
+        console.warn("Failed to get session:", message);
+        if (mounted) {
+          setError(message);
+          // Don't treat fetch errors as fatal - allow app to continue
+          setLoading(false);
+        }
       } finally {
         if (mounted) setLoading(false);
       }

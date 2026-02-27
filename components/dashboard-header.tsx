@@ -33,8 +33,9 @@ export function DashboardHeader({
 
   const checkServer = async () => {
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
       const response = await axios.get(
-        "https://metrictracker-be.onrender.com/health"
+        `${apiUrl}/health`
       );
       if (response.status === 200) {
         setStatus("green");

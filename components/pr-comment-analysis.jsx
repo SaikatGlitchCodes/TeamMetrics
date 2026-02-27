@@ -48,9 +48,10 @@ export function PRCommentAnalysis({
     setError(null)
     
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
       const url = compareTeamId 
-        ? `https://metrictracker-be.onrender.com/prs/comment-analysis/${teamId}?compareTeamId=${compareTeamId}&year=${selectedYear}`
-        : `https://metrictracker-be.onrender.com/prs/comment-analysis/${teamId}?year=${selectedYear}`
+        ? `${apiUrl}/prs/comment-analysis/${teamId}?compareTeamId=${compareTeamId}&year=${selectedYear}`
+        : `${apiUrl}/prs/comment-analysis/${teamId}?year=${selectedYear}`
       
       const response = await fetch(url)
       
