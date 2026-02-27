@@ -249,7 +249,7 @@ export default function Dashboard() {
             </div>
             {/* Row 1: Monthly Review Trends + SLA */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start mb-6">
-              <MonthlyReviewBarChart 
+              <PlatformApprovalChart
                 teamId={selectedTeam}
                 startDate={dateRangeMode === 'custom' ? customStartDate : undefined}
                 endDate={dateRangeMode === 'custom' ? customEndDate : undefined}
