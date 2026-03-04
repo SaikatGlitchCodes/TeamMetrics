@@ -123,7 +123,7 @@ export default function EngineerProfilePage() {
     setError(null)
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be1.onrender.com';
       const response = await fetch(`${apiUrl}/prs/user/${githubUsername}?timeline=${timeline}`)
       
       if (!response.ok) {
@@ -151,7 +151,7 @@ export default function EngineerProfilePage() {
     setAiAnalysis(null)
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be1.onrender.com';
       const response = await fetch(`${apiUrl}/ai/analyze-repo`, {
         method: 'POST',
         headers: {
@@ -193,7 +193,7 @@ export default function EngineerProfilePage() {
     setCustomAnalysis(null)
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be.onrender.com';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://metrictracker-be1.onrender.com';
       const response = await fetch(`${apiUrl}/ai/custom-analysis`, {
         method: 'POST',
         headers: {
