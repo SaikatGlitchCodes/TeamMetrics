@@ -205,7 +205,7 @@ export function PRCommentAnalysis({
         External: q.externalComments || 0,
       }
       
-      if (compareTeamId && q.compareTeamComments) {
+      if (compareTeamId) {
         chartData[`${data?.teams?.comparison?.name || 'Comparison Team'} - Team`] = q.compareTeamComments || 0
       }
       
@@ -231,7 +231,7 @@ export function PRCommentAnalysis({
       { name: "External", value: data?.yearSummary?.externalComments || 0 },
     ]
     
-    if (compareTeamId && data?.yearSummary?.compareTeamComments) {
+    if (compareTeamId) {
       pieData.splice(1, 0, { 
         name: data?.teams?.comparison?.name || 'Comparison Team', 
         value: data?.yearSummary?.compareTeamComments || 0
